@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head lang="fr">
+    <script src="bower_components/platform/platform.js"></script>
+    <link rel="import" href="google-signin.html">
+    <title>${title}</title>
+    <meta name="google" value="notranslate"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <style type="text/css" media="screen">
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: auto;
+            text-align: center;
+            background-color: ${bgcolor};
+        }
+
+        object:focus {
+            outline: none;
+        }
+
+        #flashContent {
+            display: none;
+        }
+    </style>
+
+    <link rel="stylesheet" type="text/css" href="history/history.css"/>
+    <script type="text/javascript" src="history/history.js"></script>
+
+    <script type="text/javascript" src="swfobject.js"></script>
+    <script type="text/javascript">
+        var swfVersionStr = "${version_major}.${version_minor}.${version_revision}";
+        var xiSwfUrlStr = "playerProductInstall.swf";
+        var flashvars = {};
+        var params = {};
+        params.quality = "high";
+        params.bgcolor = "${bgcolor}";
+        params.allowscriptaccess = "sameDomain";
+        params.allowfullscreen = "true";
+        var attributes = {};
+        attributes.id = "app";
+        attributes.name = "app";
+        attributes.align = "middle";
+        swfobject.embedSWF(
+                "${swf}.swf", "flashContent",
+                "${width}", "${height}",
+                swfVersionStr, xiSwfUrlStr,
+                flashvars, params, attributes);
+
+        swfobject.createCSS("#flashContent", "display:block;text-align:left;");
+    </script>
+</head>
+<body>
+
+<script>
+
+    function signIn() {
+        var gSign = document.getElementById('gSign');
+        gSign.signIn();
+    }
+
+    function signOut() {
+        var gSign = document.getElementById('gSign');
+        gSign.signOut();
+    }
+
+    window.addEventListener('polymer-ready', function (e) {
+        console.log('p_ready');
+    });
+</script>
+
+<script>
+
+    document.addEventListener("google-signin-success", function (e) {
+        // Access the GAPI instance passed back from authorization
+        var gapi = e.detail.gapi;
+
+        // Load V1 of the G+ API
+        gapi.client.load('plus', 'v1', function () {
+            var request = gapi.client.plus.people.get({
+                'userId': 'me'
+            });
+
+            request.execute(function (resp) {
+                console.log(resp);
+                var swf = window['app'];
+                swf.onSigninSuccess(resp);
+            });
+        });
+
+        gapi.client.load('oauth2', 'v2', function () {
+            var request = gapi.client.oauth2.userinfo.get();
+            request.execute(getEmailCallback);
+
+            function getEmailCallback(obj) {
+                console.log("getEmailCallback : " );
+                console.log( obj);
+                var swf = window['app'];
+                swf.onSigninSuccess(obj);
+            }
+        });
+
+    });
+
+    document.addEventListener("google-signed-out", function () {
+        console.log("google-signed-out");
+        var swf = window['app'];
+        swf.onSignedOut(resp);
+        /*document.querySelector("#status").innerHTML = "You are now signed out.";*/
+    });
+
+    document.addEventListener("google-signout-attempted", function () {
+        console.log("google-signout-attempted");
+        /*document.querySelector("#status").innerHTML = "You attempted to sign out.";*/
+    });
+</script>
+
+<google-signin id="gSign"
+               clientId="84591947984-1bs98it4852lg8p1lf7d5plvmps1onga.apps.googleusercontent.com"
+               scopes="profile email" height="1" width="1"
+        ></google-signin>
+               <!--style="display:none"-->
+
+<div id="flashContent">
+    <p>
+        To view this page ensure that Adobe Flash Player version
+        ${version_major}.${version_minor}.${version_revision} or greater is installed.
+    </p>
+    <script type="text/javascript">
+        var pageHost = ((document.location.protocol == "https:") ? "https://" : "http://");
+        document.write("<a href='http://www.adobe.com/go/getflashplayer'><img src='"
+                + pageHost + "www.adobe.com/images/shared/download_buttons/get_flash_player.gif' alt='Get Adobe Flash player' /></a>");
+    </script>
+</div>
+
+<noscript>
+    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="${width}" height="${height}" id="app">
+        <param name="movie" value="${swf}.swf"/>
+        <param name="quality" value="high"/>
+        <param name="bgcolor" value="${bgcolor}"/>
+        <param name="allowScriptAccess" value="sameDomain"/>
+        <param name="allowFullScreen" value="true"/>
+        <!--[if !IE]>-->
+        <object type="application/x-shockwave-flash" data="${swf}.swf" width="${width}" height="${height}">
+            <param name="quality" value="high"/>
+            <param name="bgcolor" value="${bgcolor}"/>
+            <param name="allowScriptAccess" value="sameDomain"/>
+            <param name="allowFullScreen" value="true"/>
+            <!--<![endif]-->
+            <!--[if gte IE 6]>-->
+            <p>
+                Either scripts and active content are not permitted to run or Adobe Flash Player version
+                ${version_major}.${version_minor}.${version_revision} or greater is not installed.
+            </p>
+            <!--<![endif]-->
+            <a href="http://www.adobe.com/go/getflashplayer">
+                <img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="Get Adobe Flash Player"/>
+            </a>
+            <!--[if !IE]>-->
+        </object>
+        <!--<![endif]-->
+    </object>
+</noscript>
+</body>
+</html>

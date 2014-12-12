@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark"
+			   applicationComplete="initBridge()"
+	>
+	<fx:Script><![CDATA[
+		import spark.components.Alert;
+
+		private var bridgeInitialized:Boolean;
+
+		[Bindable]
+		private var signedIn:Boolean;
+
+		private function initBridge():void
+		{
+			if( ExternalInterface.available )
+			{
+				ExternalInterface.addCallback( "onSigninSuccess" , onSigninSuccess );
+				ExternalInterface.addCallback( "onSigninError" , onSigninError);
+				ExternalInterface.addCallback( "onSignedOut" , onSignedOut );
+				bridgeInitialized = true;
+			}
+			else
+				Alert.show( "Error : ExternalInterface is not available" );
+		}
+
+		private function signIn():void
+		{
+			if( bridgeInitialized )
+			{
+				var res:String = ExternalInterface.call( "signin" );
+
+				if( !bridgeInitialized )
+					initBridge();
+
+				trace( 'res' , res );
+			}
+			else
+				Alert.show( "Error : ExternalInterface is not available" );
+		}
+
+		public function onSigninSuccess( user:Object ):void
+		{
+
+			setCurrentState( signedInState.name );
+
+			for( var prop:String in user )
+			{
+				trace( prop + ' : ' + user[prop] );
+				fldLog.appendText( prop + ' : ' + user[prop] + '\n' );
+
+				if( user.hasOwnProperty( 'image' ) && user.image.hasOwnProperty( 'url' ) )
+				{
+					userImg.source = user.image.url;
+				}
+			}
+		}
+
+		public function onSigninError( error:Object ):void
+		{
+			signedIn = false;
+			for( var prop:String in error )
+			{
+				trace( prop + ' : ' + error[prop] );
+			}
+		}
+
+		private function signOut():void
+		{
+			if( signedIn )
+			{
+				var res:String = ExternalInterface.call( "signOut");
+				signedIn = false;
+			}
+		}
+
+		private function onSignedOut():void
+		{
+			setCurrentState( signedOutState.name );
+			userImg.source = null;
+			fldLog.text = "signedOut";
+		}
+
+		]]></fx:Script>
+
+	<s:layout>
+		<s:VerticalLayout gap="20" />
+	</s:layout>
+
+	<s:states>
+	    <s:State id="signedOutState" name="signedOut"
+			enterState="signedIn = false"
+			/>
+	    <s:State id="signedInState" name="signedIn"
+			enterState="signedIn = true"
+			/>
+	</s:states>
+
+	<s:Button label="Sign in"
+			  chromeColor.signedOut="#DD0000" color="#FFFFFF"
+			  chromeColor.signedIn="#404040"
+		click.signedOut="signIn()"
+		click.signedIn="signOut()"
+		/>
+
+	<s:Label id="lblName" />
+
+	<s:BitmapImage id="userImg" />
+
+	<s:TextArea id="fldLog" width="500" height="100%" />
+</s:Application>
